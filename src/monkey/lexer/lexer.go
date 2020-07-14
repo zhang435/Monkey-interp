@@ -5,6 +5,7 @@ import (
 )
 
 // Lexer : lexer object
+// Lexer convert the input string to tokens
 type Lexer struct {
 	input        string
 	position     int  // current position of the input

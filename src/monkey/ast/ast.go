@@ -5,6 +5,8 @@ import (
 	"monkey/token"
 )
 
+// this define the node of the syntax tree.
+
 // Node interface
 type Node interface {
 	TokenLiteral() string
@@ -144,4 +146,48 @@ func (es *ExpressionStatement) String() string {
 		return es.Expression.String()
 	}
 	return ""
+}
+
+//////////////////////////////////////////////////////
+// define int node
+type IntegerLiteral struct {
+	Token token.Token
+	Value int64
+}
+
+func (ie *IntegerLiteral) expressionNode() {}
+
+//TokenLiteral get the literal token
+func (ie *IntegerLiteral) TokenLiteral() string {
+	return ie.Token.Literal
+}
+
+func (ie *IntegerLiteral) String() string {
+	return ie.Token.Literal
+}
+
+//PrefixExpression this struct is part of experssion to represents !4 -5 ...
+type PrefixExpression struct {
+	Token    token.Token // the prefix token !
+	Operator string
+	Right    Expression
+}
+
+//ExpressionNode prefix expression is a expression
+func (pe *PrefixExpression) expressionNode() {}
+
+//TokenLiteral get the token of the experssion
+func (pe *PrefixExpression) TokenLiteral() string {
+	return pe.Token.Literal
+}
+
+func (pe *PrefixExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	out.WriteString(pe.Operator)
+	out.WriteString(pe.Right.String())
+	out.WriteString(")")
+
+	return out.String()
 }

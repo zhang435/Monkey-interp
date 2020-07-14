@@ -5,6 +5,7 @@ import (
 	"monkey/ast"
 	"monkey/lexer"
 	"monkey/token"
+	"strconv"
 )
 
 const (
@@ -50,6 +51,10 @@ func New(l *lexer.Lexer) *Parser {
 
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	p.registerPrefix(token.IDENT, p.parserIdentifier)
+	p.registerPrefix(token.INT, p.parseIntegerLiteral)
+	p.registerPrefix(token.BANG, p.parsePrefixExperssion)
+	p.registerPrefix(token.PLUS, p.parsePrefixExperssion)
+	p.registerPrefix(token.MINUS, p.parsePrefixExperssion)
 
 	p.nextToken()
 	p.nextToken()
@@ -76,7 +81,6 @@ func (p *Parser) parseProgram() *ast.Program {
 
 		p.nextToken()
 	}
-	fmt.Println(program.String())
 	return program
 }
 
@@ -170,4 +174,48 @@ func (p *Parser) parserExpression(precedence int) ast.Expression {
 
 func (p *Parser) parserIdentifier() ast.Expression {
 	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+}
+
+func (p *Parser) parseIntegerLiteral() ast.Expression {
+	i := &ast.IntegerLiteral{Token: p.curToken}
+
+	value, error := strconv.ParseInt(p.curToken.Literal, 0, 64)
+
+	if error != nil {
+		msg := fmt.Sprintf("try to parse a int error, but got %q  ", p.curToken.Literal)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+
+	i.Value = value
+	return i
+
+}
+
+func (p *Parser) noPredixFunctionFound(t token.TokenType) {
+	msg := fmt.Sprintf("Unable to find bind parser for prefix %s", t)
+	p.errors = append(p.errors, msg)
+
+}
+
+func (p *Parser) parseExperssion(precedence int) ast.Expression {
+	fn := p.prefixParseFns[p.curToken.Type]
+	if fn == nil {
+		p.noPredixFunctionFound(p.curToken.Type)
+	}
+
+	return fn()
+}
+
+func (p *Parser) parsePrefixExperssion() ast.Expression {
+	expr := &ast.PrefixExpression{
+		Token:    p.curToken,
+		Operator: p.curToken.Literal,
+	}
+
+	p.nextToken()
+
+	expr.Right = p.parseExperssion(PREFIX)
+
+	return expr
 }
